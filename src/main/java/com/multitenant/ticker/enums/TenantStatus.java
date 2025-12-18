@@ -1,4 +1,7 @@
 package com.multitenant.ticker.enums;
 
-public class TenantStatus {
+public enum TenantStatus {
+    ACTIVE,
+    INACTIVE,
+    SUSPENDED
 }

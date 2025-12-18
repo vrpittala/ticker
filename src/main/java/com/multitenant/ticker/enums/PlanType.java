@@ -1,4 +1,7 @@
 package com.multitenant.ticker.enums;
 
-public class PlanType {
+public enum PlanType {
+    FREE,
+    PREMIUM,
+    ENTERPRISE
 }
