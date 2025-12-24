@@ -56,10 +56,10 @@ public class AuthService {
         newUser.setUsername(registerDto.getUsername());
         newUser.setTenantId(tenantId);
         newUser.setPassword(this.passwordEncoder.encode(registerDto.getPassword()));
-        Role roles = this.roleRepository.findByRoleName("USER").orElseThrow(() -> new RuntimeException("Role not found"));
+        Role roles = this.roleRepository.findByName("USER").orElseThrow(() -> new RuntimeException("Role not found"));
         newUser.setRoles(List.of(roles));
         this.userRepository.save(newUser);
         String jwtToken = this.jwtGenerator.generateToken(newUser, tenant);
-        return new ResponseEntity<>("User Registered Successfully", HttpStatus.OK);
+        return new ResponseEntity<>(jwtToken, HttpStatus.OK);
     }
 }
