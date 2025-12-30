@@ -29,5 +29,5 @@ public class Tenant {
     private PlanType plan;
 
     private Instant created;
-    private Instant latUpdated;
+    private Instant lastUpdated;
 }

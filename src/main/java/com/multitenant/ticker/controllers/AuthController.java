@@ -1,6 +1,5 @@
 package com.multitenant.ticker.controllers;
 
-import com.multitenant.ticker.dto.AuthResponseDto;
 import com.multitenant.ticker.dto.RegisterDto;
 import com.multitenant.ticker.services.AuthService;
 import org.springframework.http.ResponseEntity;

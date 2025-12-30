@@ -32,11 +32,11 @@ public class SecurityConfig {
         // Security filter chain configuration goes here
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers(("/api/auth/**")).permitAll()
                 .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())
         .exceptionHandling(exceptions ->
-                exceptions.authenticationEntryPoint(this.jwtAuthEntryPoint))
+                exceptions.authenticationEntryPoint(jwtAuthEntryPoint))
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
