@@ -39,7 +39,7 @@ public class JwtGenerator {
         return token;
     }
 
-    public String generateToken(UserEntity user, Tenant tenant){
+    public String generateToken(Authentication authentication,UserEntity user, Tenant tenant){
         String username = user.getUsername();
         Map<String, Object> claims = new HashMap<>();
         claims.put("tenantId", tenant.getId());

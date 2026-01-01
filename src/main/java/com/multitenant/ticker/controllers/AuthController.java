@@ -1,5 +1,7 @@
 package com.multitenant.ticker.controllers;
 
+import com.multitenant.ticker.dto.AuthResponseDto;
+import com.multitenant.ticker.dto.LoginDto;
 import com.multitenant.ticker.dto.RegisterDto;
 import com.multitenant.ticker.services.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +21,12 @@ public class AuthController {
     }
 
     @PostMapping("register")
-    public ResponseEntity<String> register(@RequestBody RegisterDto registerDto) {
+    public ResponseEntity<AuthResponseDto> register(@RequestBody RegisterDto registerDto) {
         return this.authService.register(registerDto);
+    }
+
+    @PostMapping("login")
+    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginDto loginDto) {
+        return this.authService.login(loginDto);
     }
 }
