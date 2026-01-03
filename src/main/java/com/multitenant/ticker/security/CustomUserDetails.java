@@ -4,6 +4,8 @@ import com.multitenant.ticker.context.TenantContext;
 import com.multitenant.ticker.entity.UserEntity;
 import com.multitenant.ticker.entity.Role;
 import com.multitenant.ticker.repo.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -22,6 +24,8 @@ public class CustomUserDetails implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    private static final Logger log = LoggerFactory.getLogger(CustomUserDetails.class);
+
     public CustomUserDetails(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -29,6 +33,7 @@ public class CustomUserDetails implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) {
         UUID tenantId = TenantContext.getTenantId();
+        log.info("Loading user: {} for tenant: {}", username, tenantId);
         UserEntity user = userRepository.findByUsernameAndTenantId(username, tenantId)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
         return new User(user.getUsername(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));

@@ -14,6 +14,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class JwtGenerator {
@@ -26,20 +27,7 @@ public class JwtGenerator {
         this.key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
-    public String generateToken2(Authentication authentication){
-        String username = authentication.getName();
-        Date currentDate = new Date();
-        Date expiryDate = new Date(currentDate.getTime() + this.jwtProperties.getExpiration());
-        String token = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(expiryDate)
-                .signWith(this.key, SignatureAlgorithm.HS512)
-                .compact();
-        return token;
-    }
-
-    public String generateToken(Authentication authentication,UserEntity user, Tenant tenant){
+    public String generateToken(UserEntity user, Tenant tenant){
         String username = user.getUsername();
         Map<String, Object> claims = new HashMap<>();
         claims.put("tenantId", tenant.getId());
@@ -62,6 +50,15 @@ public class JwtGenerator {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String getTenantIdFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(this.key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("tenantId", String.class);
     }
 
     public boolean validateToken(String token) {

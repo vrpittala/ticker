@@ -7,6 +7,7 @@ import com.multitenant.ticker.dto.RegisterDto;
 import com.multitenant.ticker.entity.Role;
 import com.multitenant.ticker.entity.Tenant;
 import com.multitenant.ticker.entity.UserEntity;
+import com.multitenant.ticker.enums.PlanType;
 import com.multitenant.ticker.enums.TenantStatus;
 import com.multitenant.ticker.repo.RoleRepository;
 import com.multitenant.ticker.repo.TenantRepository;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,9 +63,12 @@ public class AuthService {
         if(!this.tenantService.tenantExistsByTenantKey(tenantKey)){
             log.info("Adding new tenant: {}", registerDto.getDisplayName());
             Tenant newTenant = new Tenant();
+            newTenant.setCreated(Instant.now());
+            newTenant.setLastUpdated(Instant.now());
             tenant = newTenant;
             newTenant.setTenantKey(registerDto.getTenantKey());
             newTenant.setDisplayName(registerDto.getDisplayName());
+            newTenant.setPlan(PlanType.FREE);
             newTenant.setStatus(TenantStatus.ACTIVE);
             this.tenantService.saveTenant(newTenant);
             tenantId = newTenant.getId();
@@ -76,11 +81,7 @@ public class AuthService {
         newUser.setRoles(List.of(roles));
         this.userService.saveUser(newUser);
         log.info("Saved user {} to DB", registerDto.getUsername());
-        UsernamePasswordAuthenticationToken upaToken =
-                new UsernamePasswordAuthenticationToken(registerDto.getUsername(), registerDto.getPassword());
-        Authentication authentication = this.authenticationManager.authenticate(upaToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwtToken = this.jwtGenerator.generateToken(authentication, newUser, tenant);
+        String jwtToken = this.jwtGenerator.generateToken(newUser, tenant);
         log.debug("JWT token: {}", jwtToken);
         return new ResponseEntity<>(new AuthResponseDto("user registered successfully", jwtToken), HttpStatus.OK);
     }
@@ -108,7 +109,7 @@ public class AuthService {
                 TenantContext.clear();
             }
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwtToken = this.jwtGenerator.generateToken(authentication, user, tenant);
+            String jwtToken = this.jwtGenerator.generateToken(user, tenant);
             log.debug("JWT token: {}", jwtToken);
             return new ResponseEntity<>(new AuthResponseDto("user logged in successfully", jwtToken), HttpStatus.OK);
         }

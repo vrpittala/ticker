@@ -14,7 +14,7 @@ public class TenantService {
 
     public Tenant resolveTenantByKey(String tenantKey) {
         return this.tenantRepository.findByTenantKey(tenantKey)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                .orElse(null);
     }
 
     public Boolean tenantExistsByTenantKey(String tenantKey) {
