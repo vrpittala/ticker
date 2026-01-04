@@ -73,6 +73,7 @@ public class AuthService {
             this.tenantService.saveTenant(newTenant);
             tenantId = newTenant.getId();
         }
+        TenantContext.setTenantId(tenantId);
         UserEntity newUser = new UserEntity();
         newUser.setUsername(registerDto.getUsername());
         newUser.setTenantId(tenantId);
@@ -80,6 +81,7 @@ public class AuthService {
         Role roles = this.roleRepository.findByName("USER").orElseThrow(() -> new RuntimeException("Role not found"));
         newUser.setRoles(List.of(roles));
         this.userService.saveUser(newUser);
+        TenantContext.clear();
         log.info("Saved user {} to DB", registerDto.getUsername());
         String jwtToken = this.jwtGenerator.generateToken(newUser, tenant);
         log.debug("JWT token: {}", jwtToken);
@@ -104,6 +106,7 @@ public class AuthService {
                 UsernamePasswordAuthenticationToken upaToken =
                         new UsernamePasswordAuthenticationToken(username, password);
                 authentication = this.authenticationManager.authenticate(upaToken);
+                authentication.getAuthorities().forEach(authority -> log.info("Granted Authority: {}", authority.getAuthority()));
             }
             finally {
                 TenantContext.clear();

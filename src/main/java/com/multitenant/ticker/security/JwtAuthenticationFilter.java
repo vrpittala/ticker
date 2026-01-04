@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.info("Set tenant context to tenantId: {} for user: {}", tenantId, username);
             UserDetails userDetails = customUserDetails.loadUserByUsername(username);
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            userDetails.getAuthorities().forEach(authority -> log.info("Has Authority: {}", authority.getAuthority()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
