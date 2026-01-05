@@ -4,6 +4,8 @@ import com.multitenant.ticker.entity.Tenant;
 import com.multitenant.ticker.repo.TenantRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class TenantService {
     private final TenantRepository tenantRepository;
@@ -17,8 +19,17 @@ public class TenantService {
                 .orElse(null);
     }
 
+    public Tenant resolveTenantById(UUID tenantId) {
+        return this.tenantRepository.findById(tenantId)
+                .orElse(null);
+    }
+
     public Boolean tenantExistsByTenantKey(String tenantKey) {
         return this.tenantRepository.existsByTenantKey(tenantKey);
+    }
+
+    public Boolean tenantExistsById(UUID tenantId) {
+        return this.tenantRepository.existsById(tenantId);
     }
 
     public void saveTenant(Tenant tenant) {

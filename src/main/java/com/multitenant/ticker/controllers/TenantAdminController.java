@@ -1,8 +1,11 @@
 package com.multitenant.ticker.controllers;
 
+import com.multitenant.ticker.dto.UpgradePlanRequestDto;
+import com.multitenant.ticker.services.TenantAdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,9 +17,15 @@ import static org.springframework.security.authorization.AuthorityAuthorizationM
 @PreAuthorize("hasRole('TENANT_ADMIN')")
 public class TenantAdminController {
 
-    @PostMapping("upgrade-to-premium")
-    public ResponseEntity<String> upgradeToPremium() {
+    private final TenantAdminService tenantAdminService;
+
+    public TenantAdminController(TenantAdminService tenantAdminService) {
+        this.tenantAdminService = tenantAdminService;
+    }
+
+    @PostMapping("upgrade")
+    public ResponseEntity<String> upgradeToPremium(@RequestBody UpgradePlanRequestDto upgradePlanRequestDto) {
         // Logic to upgrade tenant to premium
-        return ResponseEntity.ok("Tenant upgraded to premium successfully.");
+        return this.tenantAdminService.upgradeTenant(upgradePlanRequestDto.getPlanType());
     }
 }

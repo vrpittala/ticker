@@ -9,5 +9,6 @@ import java.util.UUID;
 @Repository
 public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     Optional<Tenant> findByTenantKey(String tenantKey);
+    Optional<Tenant> findById(UUID id);
     Boolean existsByTenantKey(String tenantKey);
 }
