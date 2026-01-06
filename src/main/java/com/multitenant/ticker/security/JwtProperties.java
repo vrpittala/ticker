@@ -12,5 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class JwtProperties {
     private String secret;
     private long expiration;
-
+    private String adminUsername;
+    private String adminPassword;
 }
