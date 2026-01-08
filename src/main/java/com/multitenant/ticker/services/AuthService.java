@@ -14,6 +14,8 @@ import com.multitenant.ticker.repo.TenantRepository;
 import com.multitenant.ticker.repo.UserRepository;
 import com.multitenant.ticker.security.JwtGenerator;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,6 +43,7 @@ public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
+    @Autowired
     public AuthService(TenantService tenantService, UserService userService, PasswordEncoder passwordEncoder, JwtGenerator jwtGenerator, RoleRepository roleRepository, AuthenticationManager authenticationManager) {
         this.tenantService = tenantService;
         this.userService = userService;
@@ -48,6 +51,14 @@ public class AuthService {
         this.jwtGenerator = jwtGenerator;
         this.roleRepository = roleRepository;
         this.authenticationManager = authenticationManager;
+    }
+
+    public void assertSuperAdmin(UserEntity user) {
+        Role adminRole = this.roleRepository.findByName("ADMIN").orElseThrow(() -> new RuntimeException("ADMIN role not found"));
+        if (!user.getRoles().contains(adminRole)) {
+            log.warn("User {} is not a super admin", user.getUsername());
+            throw new RuntimeException("User is not a super admin");
+        }
     }
 
     @Transactional
@@ -92,31 +103,47 @@ public class AuthService {
         String username = loginDto.getUsername();
         String password = loginDto.getPassword();
         String tenantKey = loginDto.getTenantKey();
-        log.info("Starting login for user: {}", username);
-        if(this.tenantService.tenantExistsByTenantKey(tenantKey)){
-            Tenant tenant = this.tenantService.resolveTenantByKey(tenantKey);
-            UserEntity user = this.userService.resolveUserByUsernameAndTenantId(username, tenant.getId());
-            if(user == null){
-                log.warn("User {} not found for tenant {}", username, tenantKey);
-                return new ResponseEntity<>(new AuthResponseDto("User not found"), HttpStatus.BAD_REQUEST);
-            }
-            TenantContext.setTenantId(tenant.getId());
-            Authentication authentication;
-            try {
-                UsernamePasswordAuthenticationToken upaToken =
-                        new UsernamePasswordAuthenticationToken(username, password);
-                authentication = this.authenticationManager.authenticate(upaToken);
+        if(tenantKey == null){
+            UserEntity user = this.userService.resolveUserByUsername(username);
+            if(user!=null) {
+                this.assertSuperAdmin(user);
+                log.info("Starting login for super admin user: {}", username);
+                UsernamePasswordAuthenticationToken upaToken = new UsernamePasswordAuthenticationToken(username, password);
+                Authentication authentication = this.authenticationManager.authenticate(upaToken);
                 authentication.getAuthorities().forEach(authority -> log.info("Granted Authority: {}", authority.getAuthority()));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwtToken = this.jwtGenerator.generateSuperAdminToken(user);
+                log.debug("JWT token: {}", jwtToken);
+                return new ResponseEntity<>(new AuthResponseDto("User logged in successfully", jwtToken), HttpStatus.OK);
             }
-            finally {
-                TenantContext.clear();
+            return new ResponseEntity<>(new AuthResponseDto("User not found"), HttpStatus.BAD_REQUEST);
+
+        }else {
+            log.info("Starting login for user: {}", username);
+            if(this.tenantService.tenantExistsByTenantKey(tenantKey)){
+                Tenant tenant = this.tenantService.resolveTenantByKey(tenantKey);
+                UserEntity user = this.userService.resolveUserByUsernameAndTenantId(username, tenant.getId());
+                if(user == null){
+                    log.warn("User {} not found for tenant {}", username, tenantKey);
+                    return new ResponseEntity<>(new AuthResponseDto("User not found"), HttpStatus.BAD_REQUEST);
+                }
+                TenantContext.setTenantId(tenant.getId());
+                Authentication authentication;
+                try {
+                    UsernamePasswordAuthenticationToken upaToken = new UsernamePasswordAuthenticationToken(username, password);
+                    authentication = this.authenticationManager.authenticate(upaToken);
+                    authentication.getAuthorities().forEach(authority -> log.info("Granted Authority: {}", authority.getAuthority()));
+                }
+                finally {
+                    TenantContext.clear();
+                }
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwtToken = this.jwtGenerator.generateToken(user, tenant);
+                log.debug("JWT token: {}", jwtToken);
+                return new ResponseEntity<>(new AuthResponseDto("User logged in successfully", jwtToken), HttpStatus.OK);
             }
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwtToken = this.jwtGenerator.generateToken(user, tenant);
-            log.debug("JWT token: {}", jwtToken);
-            return new ResponseEntity<>(new AuthResponseDto("user logged in successfully", jwtToken), HttpStatus.OK);
         }
-        return new ResponseEntity<>(new AuthResponseDto("Tenant not found"), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new AuthResponseDto("User not found"), HttpStatus.BAD_REQUEST);
 
     }
 }

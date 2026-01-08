@@ -43,6 +43,21 @@ public class JwtGenerator {
             .compact();
     }
 
+    public String generateSuperAdminToken(UserEntity user){
+        String username = user.getUsername();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", user.getRoles().stream().map(Role::getName).toList());
+        Date currentDate = new Date();
+        Date expiryDate = new Date(currentDate.getTime() + this.jwtProperties.getExpiration());
+        return Jwts.builder()
+                .setSubject(username)
+                .addClaims(claims)
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(this.key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
     public String getUsernameFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(this.key)

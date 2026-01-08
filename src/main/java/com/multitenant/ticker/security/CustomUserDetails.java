@@ -33,6 +33,13 @@ public class CustomUserDetails implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) {
         UUID tenantId = TenantContext.getTenantId();
+        if(tenantId == null) {
+            //Super admin login scenario
+            log.info("Loading super admin user: {}", username);
+            UserEntity user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+            return new User(user.getUsername(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));
+        }
         log.info("Loading user: {} for tenant: {}", username, tenantId);
         UserEntity user = userRepository.findByUsernameAndTenantId(username, tenantId)
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));

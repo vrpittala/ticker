@@ -18,6 +18,11 @@ public class UserService {
         return this.userRepository.existsByUsername(username);
     }
 
+    public UserEntity resolveUserByUsername(String username) {
+        return this.userRepository.findByUsername(username)
+                .orElse(null);
+    }
+
     public Boolean userExistsByUsernameAndTenantId(String username, UUID tenantId) {
         return this.userRepository.findByUsernameAndTenantId(username, tenantId).isPresent();
     }
