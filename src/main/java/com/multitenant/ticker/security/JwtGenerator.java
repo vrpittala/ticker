@@ -3,6 +3,7 @@ package com.multitenant.ticker.security;
 import com.multitenant.ticker.entity.Tenant;
 import com.multitenant.ticker.entity.UserEntity;
 import com.multitenant.ticker.entity.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -11,10 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class JwtGenerator {
@@ -84,6 +82,22 @@ public class JwtGenerator {
         } catch (Exception e) {
             throw new AuthenticationCredentialsNotFoundException("JWT token is expired or invalid");
         }
+    }
+
+    public Boolean isSuperAdmin(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        List<String> roles = (List<String>) claims.get("roles");
+        for(String role : roles){
+            if(role.equals("ADMIN")){
+                return true;
+            }
+        }
+        return false;
     }
 
 }

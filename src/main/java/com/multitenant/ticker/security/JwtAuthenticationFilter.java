@@ -33,19 +33,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        // Implement JWT authentication logic here
-        String token = getJWTFromRequest(request);
-        if(token != null && jwtGenerator.validateToken(token)){
-            String username = jwtGenerator.getUsernameFromToken(token);
-            UUID tenantId = UUID.fromString(jwtGenerator.getTenantIdFromToken(token));
-            TenantContext.setTenantId(tenantId);
-            log.info("Set tenant context to tenantId: {} for user: {}", tenantId, username);
-            UserDetails userDetails = customUserDetails.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            userDetails.getAuthorities().forEach(authority -> log.info("Has Authority: {}", authority.getAuthority()));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            String token = getJWTFromRequest(request);
+            if(token != null && jwtGenerator.validateToken(token)){
+                String username = jwtGenerator.getUsernameFromToken(token);
+                if(!this.jwtGenerator.isSuperAdmin(token)){
+                    UUID tenantId = UUID.fromString(jwtGenerator.getTenantIdFromToken(token));
+                    TenantContext.setTenantId(tenantId);
+                    log.info("Set tenant context to tenantId: {} for user: {}", tenantId, username);
+                }
+                UserDetails userDetails = customUserDetails.loadUserByUsername(username);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                userDetails.getAuthorities().forEach(authority -> log.info("Has Authority: {}", authority.getAuthority()));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            }
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
+            log.info("Cleared tenant context");
         }
-        filterChain.doFilter(request, response);
+
     }
 
     private String getJWTFromRequest(HttpServletRequest request){

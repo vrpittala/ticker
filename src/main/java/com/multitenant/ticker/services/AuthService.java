@@ -72,17 +72,8 @@ public class AuthService {
         }
         UUID tenantId = tenant!=null ? tenant.getId() : null;
         if(!this.tenantService.tenantExistsByTenantKey(tenantKey)){
-            log.info("Adding new tenant: {}", registerDto.getDisplayName());
-            Tenant newTenant = new Tenant();
-            newTenant.setCreated(Instant.now());
-            newTenant.setLastUpdated(Instant.now());
-            tenant = newTenant;
-            newTenant.setTenantKey(registerDto.getTenantKey());
-            newTenant.setDisplayName(registerDto.getDisplayName());
-            newTenant.setPlan(PlanType.FREE);
-            newTenant.setStatus(TenantStatus.ACTIVE);
-            this.tenantService.saveTenant(newTenant);
-            tenantId = newTenant.getId();
+              //Tenant should be added by admin only
+              return new ResponseEntity<AuthResponseDto>(new AuthResponseDto("Tenant does not exist"), HttpStatus.BAD_REQUEST);
         }
         TenantContext.setTenantId(tenantId);
         UserEntity newUser = new UserEntity();
